@@ -30,7 +30,7 @@ pip install -r requirements.txt
 
 4. Ejecutar servidor en modo desarrollo
 ```bash
-python server.py
+flask --app server.py --debug run
 ```
 
 
