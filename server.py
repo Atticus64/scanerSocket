@@ -2,6 +2,7 @@ import logging
 from flask import Flask, request, jsonify
 from flask_socketio import SocketIO, send, emit
 from flask_cors import CORS
+from main import wait_read
 
 logging.basicConfig(
     level=logging.INFO,  # Cambia a DEBUG para más verbosidad
@@ -34,6 +35,12 @@ def emit_data():
     socketio.emit('message', data)
 
     return jsonify({"status": "ok", "mensaje": "Datos enviados al frontend vía WebSocket"})
+
+@app.route('/interact')
+def interact():
+    card = wait_read()
+    
+    return jsonify(card)
 
 @app.route('/shutdown', methods=['POST'])
 def shutdown():

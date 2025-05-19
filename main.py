@@ -3,13 +3,8 @@ import time
 import requests
 
 # Configura el puerto serial
-puerto = 'COM5'  
-baud_rate = 9600
 
-# Conecta con el Arduino
-ser = serial.Serial(puerto, baud_rate, timeout=1)
-
-def read_card():
+def read_card(ser):
     # Envia el comando 'r' al Arduino para leer la tarjeta
     ser.write(b'r')
     time.sleep(2)  # Espera un poco para que el Arduino procese la solicitud
@@ -17,14 +12,16 @@ def read_card():
     # Lee la respuesta del Arduino
     if ser.in_waiting > 0:
         line = ser.readline().decode().strip()
+        time.sleep(0.5)
         uid = ""
-        data = ""
+        buffer = "defaulId;defaultData"
+        print(f"l:{line}")
         if line.startswith("UID:"):
         #    print("UID detectado:", line[4:])
-            uid = line[4:]
-        elif line.startswith("DATA:"):
-        #    print("Datos del bloque:", line[5:])
-            data = line[5:]
+            buffer = line[4:]
+
+        uid = buffer.split(";")[0]
+        data = buffer.split(";")[1]
 
         return uid, data
     else:
@@ -44,30 +41,30 @@ def write_card(data):
         else:
             print("Error al escribir en la tarjeta.")
     
+def wait_read():
+    puerto = 'COM5'  
+    baud_rate = 9600
 
-# Ejecuta la función de lectura
-while True:
-    print("Esperando una tarjeta...")
-    (uid, data) = read_card()
+    # Conecta con el Arduino
+    ser = serial.Serial(puerto, baud_rate, timeout=1)
+    readed = False
+    body = {}
+    while not readed:
+        print("Esperando una tarjeta...")
+        (uid, data) = read_card(ser)
 
-    body = {
-        'id': uid,
-        'card': True
-    }    
-    if uid:
-        #print(f"UID de la tarjeta: {uid}")
-        print(body)
+        body = {
+            'id': uid,
+            'data': data if data else None
+        }    
+        if uid:
+            #print(f"UID de la tarjeta: {uid}")
+            print(body)
+            readed = True
+            #requests.post('http://localhost:5000/data', json=body)
+        else:
+            print("No se detectó ninguna tarjeta.")
+        time.sleep(1)  # Vuelve a intentar después de un segundo
 
-        requests.post('http://localhost:5000/data', json=body)
+    return body
         
-        if data:
-            print(f"Datos de la tarjeta: {data}")
-        #else:
-            #print("No se encontraron datos en la tarjeta.")
-            #write_card(info)
-            #write_card("b:00001")
-        #print("Escribiendo en la tarjeta...")
-        #print("Escritura completada.")
-    else:
-        print("No se detectó ninguna tarjeta.")
-    time.sleep(1)  # Vuelve a intentar después de un segundo
