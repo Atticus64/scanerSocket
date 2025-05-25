@@ -4,30 +4,7 @@ import requests
 
 # Configura el puerto serial
 
-def read_card(ser):
-    # Envia el comando 'r' al Arduino para leer la tarjeta
-    ser.write(b'r')
-    time.sleep(2)  # Espera un poco para que el Arduino procese la solicitud
-
-    # Lee la respuesta del Arduino
-    if ser.in_waiting > 0:
-        line = ser.readline().decode().strip()
-        time.sleep(0.5)
-        uid = ""
-        buffer = "defaulId;defaultData"
-        print(f"l:{line}")
-        if line.startswith("UID:"):
-        #    print("UID detectado:", line[4:])
-            buffer = line[4:]
-
-        uid = buffer.split(";")[0]
-        data = buffer.split(";")[1]
-
-        return uid, data
-    else:
-        return None, None
-
-def write_card(data):
+def write_card(data, ser):
     payload = f'w:{data}'
     ser.write(payload.encode('utf-8'))
     print(f"Enviando al Arduino: {payload}")
@@ -42,11 +19,12 @@ def write_card(data):
             print("Error al escribir en la tarjeta.")
     
 def wait_read():
+    #puerto = 'COM6'  
     puerto = 'COM5'  
     baud_rate = 9600
 
     # Conecta con el Arduino
-    ser = serial.Serial(puerto, baud_rate, timeout=1)
+    ser = serial.Serial(puerto, baud_rate, timeout=3)
     readed = False
     body = {}
     while not readed:
@@ -67,4 +45,25 @@ def wait_read():
         time.sleep(1)  # Vuelve a intentar después de un segundo
 
     return body
-        
+     
+       
+def read_card(ser):
+    # Envia el comando 'r' al Arduino para leer la tarjeta
+    line = ""
+
+    #ser.write(b'r')
+    while not line.startswith("UID:"):
+        ser.write(b'r')
+        time.sleep(0.1)  
+
+        if ser.in_waiting > 0:
+            line = ser.readline().decode().strip()
+            time.sleep(0.5)
+            uid = ""
+            if line.startswith("UID:"):
+            #    print("UID detectado:", line[4:])
+                buffer = line[4:]
+                uid = buffer.split(";")[0]
+                #data = buffer.split(";")[1]
+                data = None
+                return uid, data
