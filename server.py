@@ -41,11 +41,8 @@ def emit_data():
 def interact():
     #card = readCard()
     card = wait_read()
-    data = {
-        "card": card
-    }
     
-    return jsonify(data)
+    return jsonify(card)
 
     
 @app.route('/interact_fake')
